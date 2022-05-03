@@ -1,0 +1,97 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Explore the data, describing the variables and making suitable plots.
+
+```{R}
+help(quakes)
+str(quakes)
+#lat cont
+#long cont
+#depth cont
+#mag cont 
+#stations discrete
+```
+
+```{R}
+pairs(quakes)
+hist(quakes$lat)
+hist(quakes$long)
+hist(quakes$depth)
+hist(quakes$mag)
+hist(quakes$stations)
+barplot(table(quakes$stations))
+#stations is discrete although large range more suitable 
+#to look at through hist and nearly could be 
+#treated as continuous
+
+
+#Investigate if clustering would be suitable for this dataset, and if so how many clusters do you think is appropriate based on data?
+
+#looks suitable for clustering, lat and long  with depth are creating clusters
+#at least 2 clusters most likely 3 or more
+```
+
+
+```{R}
+quakes_sd<-quakes
+colnames(quakes_sd)<-colnames(quakes)
+length(which(is.na(quakes_sd)==TRUE))
+#no missing data
+# quakes_sd <- na.omit(quakes_sd) # listwise deletion of missing
+quakes_sd <- scale(quakes_sd) #standardise the data
+#to have mean 0 and sd of 1
+pairs(quakes_sd)
+hist(quakes_sd[1:1000],main="lat")
+hist(quakes_sd[1001:2000],main="long")
+hist(quakes_sd[2001:3000],main="depth")
+hist(quakes_sd[3001:4000],main="mag")
+hist(quakes_sd[4001:5000],main="stations")
+
+dev.off()
+```
+
+#Do a Within Sum of Squares plot to investigate the number of clusters to use in k-means clustering?
+
+```{R}
+wss <- (nrow(quakes_sd)-1)*sum(apply(quakes_sd,2,var))
+for (i in 2:15){
+  wss[i] <- sum(kmeans(quakes_sd, centers=i)$withinss)
+}  
+
+plot(1:15, wss, type="b", xlab="Number of Clusters",ylab="Within Clusters Sum of Squares")
+
+help(kmeans)
+
+wss <- (nrow(quakes_sd)-1)*sum(apply(quakes_sd,2,var))
+for (i in 2:15){
+  wss[i] <- sum(kmeans(quakes_sd,   
+                       centers=i,
+                       nstart=10)$withinss)
+}  
+
+plot(1:15, wss, type="b", xlab="Number of Clusters",ylab="Within Clusters Sum of Squares")
+
+
+#Perform a k-means clustering, and show did clustering on a graph.
+#Interpret the output from the k-means clustering.
+
+#based elbow I will fit 4 clusters
+k4q<-kmeans(quakes_sd,4,nstart=10)
+str(k4q)
+pairs(quakes,col=k4q$cluster,pch=k4q$cluster)
+print(k4q)
+k4q$centers
+#summary(k4q) 
+# cluster 1 has 157 samples and describes data that are of
+#high magnitude earthquakes
+#cluster 2 has 360 obs and describes earths quakes that
+#have large depth but low magnitude
+#cluster 3 has 180 obs (smallest variability) and 
+#describes quakes on the south west with below average depth
+#cluster 4 has 303 obs (largest var) and  describes
+#quakes on the north east with low depth and mag
+```
+
+
